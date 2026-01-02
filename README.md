@@ -1,6 +1,6 @@
 # BioLENS
 
-This repository implements the MVP described in the paper "Towards Transparent Embeddings for Biomarker Discovery": encode EEG recordings, z-score and PCA1-project embeddings, fit a cubic B-spline $g(y)$ over ordered outcomes, and evaluate motif-derived constraints (proximity, monotonicity, reproducibility) plus fit adequacy vs. a null MSE.
+This repository implements the MVP described in the paper "Towards Transparent Embeddings for Biomarker Discovery": encode EEG recordings, z-score and PCA1-project embeddings, fit a cubic B-spline $g$ over ordered outcomes, and evaluate motif-derived constraints (proximity, monotonicity, reproducibility) plus fit adequacy vs. a null MSE.
 
 There are five primary scripts:
 - `main.py` — entry point; runs the MVP using synthetic data and prints key metrics
