@@ -1,4 +1,0 @@
-black==25.12.0
-matplotlib==3.10.8
-scikit-learn==1.8.0
-seaborn==0.13.2

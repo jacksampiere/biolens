@@ -67,36 +67,3 @@ def extract_transition_points(spl):
         )
     )
     return T_g
-
-
-def extract_motifs(g, T, ymin, ymax):
-    """Derive motifs across outcome intervals, aligning with composition map logic.
-
-    Args:
-        g: Piecewise polynomial representation of g(y).
-        T: Transition points.
-        ymin: Minimum outcome value.
-        ymax: Maximum outcome value.
-    Returns:
-        motifs: Array of slope/curvature signs.
-        midpoints: Midpoints of motif intervals.
-    """
-    # Tack on the start and end values to get the first and last motifs
-    T_motifs = np.sort(
-        np.concatenate(
-            [
-                np.array([ymin]),
-                T,
-                np.array([ymax]),
-            ],
-            axis=0,
-        )
-    )
-    midpoints = (T_motifs[:-1] + T_motifs[1:]) / 2
-    # Calculate sign of first and second derivative at each midpoint to derive motifs
-    gp1, gp2 = g.derivative(1), g.derivative(2)
-    # Array of shape (2, n_motifs)
-    # motifs[0, :] --> sign of first derivatives at midpoints of neighboring transition points
-    # motifs[1, :] --> sign of second derivatives
-    motifs = np.array([np.sign(gp1(midpoints)), np.sign(gp2(midpoints))])
-    return motifs, midpoints

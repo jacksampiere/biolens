@@ -1,31 +1,26 @@
 import numpy as np
 
 from constants import N_INTERIOR_KNOTS, SPLINE_DEGREE
-from spline import select_knots, fit_spline, extract_transition_points, extract_motifs
+from spline import select_knots, fit_spline, extract_transition_points
 
 
-def monotonicity(motifs_first_order, midpoints, interval, rho):
-    """Monotonicity constraint: majority slope sign within interval exceeds rho.
+def monotonicity(g, interval, rho, n_grid=10):
+    """Monotonicity constraint: ratio of net change to total variation within interval exceeds rho.
 
     Args:
-        motifs_first_order: Sign of first derivative per motif.
-        midpoints: Motif midpoints.
+        g: Spline from which to calculate monotonicity.
         interval: Outcome interval to test.
         rho: Threshold for majority sign.
+        n_grid: Number of steps for numerical integration of `g`
     Returns:
         Boolean indicating monotonicity satisfaction.
     """
     start, end = interval[0], interval[1]
-    # Create mask + extract signs
-    mask = (midpoints > start) & (
-        midpoints < end
-    )  # incorporates motifs with >=50% overlap
-    signs = motifs_first_order[mask]
-    # Calculate score + determine satisfaction
-    K = len(signs)
-    Np = (signs > 0).sum()
-    Nn = (signs < 0).sum()
-    score = max(Np, Nn) / K
+    net_change = np.abs(g(end) - g(start))
+    gp = g.derivative(1)
+    grid = np.linspace(start, end, n_grid)
+    tv = np.trapezoid(np.abs(gp(grid)), grid)
+    score = net_change / (tv + 1e-6)
     return score >= rho
 
 
@@ -87,7 +82,7 @@ def reproducibility(embeddings_train, outcomes_train, interval, thresholds, n_it
         prox.append(prox_iter)
         mono.append(mono_iter)
         if (i + 1) % 10 == 0:
-            print(f"Reproducibility bootstrapping: completed {i+1} iterations")
+            print(f"Reproducibility bootstrapping: completed {i + 1} iterations")
 
     pct_pass_prox = np.array(prox).sum() / n_iter
     pct_pass_mono = np.array(mono).sum() / n_iter
@@ -117,14 +112,9 @@ def pipeline_forward(embeddings, outcomes, interval, taus, rho):
         outcomes=outcomes, embeddings=embeddings, knots=knots, d=SPLINE_DEGREE
     )
     T_g = extract_transition_points(g_y)
-    motifs, midpoints = extract_motifs(
-        g=g_y, T=T_g, ymin=outcomes.min(), ymax=outcomes.max()
-    )
-    motifs_first_order = motifs[0, :]
     prox = proximity(T=T_g, interval=interval, taus=taus)
     mono = monotonicity(
-        motifs_first_order=motifs_first_order,
-        midpoints=midpoints,
+        g=g_y,
         interval=interval,
         rho=rho,
     )

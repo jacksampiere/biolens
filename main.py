@@ -11,11 +11,10 @@ from embed import (
     fit_projection,
     apply_projection,
 )
-from spline import select_knots, fit_spline, extract_transition_points, extract_motifs
+from spline import select_knots, fit_spline, extract_transition_points
 
 
 if __name__ == "__main__":
-
     np.random.seed(seed=42)
 
     # --------------------------------------------
@@ -25,7 +24,7 @@ if __name__ == "__main__":
     # Instantiate evaluation interval + thresholds
     interval = [5, 22]
     taus = [0.5, 0.5]
-    rho = 0.65
+    rho = 0.6
     alpha = 0.9
     thresholds = {"rho": rho, "taus": taus, "alpha": alpha}
 
@@ -79,15 +78,10 @@ if __name__ == "__main__":
 
     # Extract TIMEVIEW-like characteristics
     T_g = extract_transition_points(g_y)
-    motifs, midpoints = extract_motifs(
-        g=g_y, T=T_g, ymin=outcomes_train_sorted.min(), ymax=outcomes_train_sorted.max()
-    )
-    motifs_first_order = motifs[0, :]  # only need slopes to evaluate monotonicity
     # Evaluate proximity + monotonicity + reproducibility for test interval
     prox = proximity(T=T_g, interval=interval, taus=taus)
     mono = monotonicity(
-        motifs_first_order=motifs_first_order,
-        midpoints=midpoints,
+        g=g_y,
         interval=interval,
         rho=rho,
     )
@@ -96,7 +90,7 @@ if __name__ == "__main__":
         outcomes_train=outcomes_train_sorted,
         interval=interval,
         thresholds=thresholds,
-        n_iter=constants.N_ITER_REPROBUCIBILITY,
+        n_iter=constants.N_ITER_REPRODUCIBILITY,
     )
     # Evaluate holdout MSE + compare to null
     X_holdout_pp = apply_preproc_map(preproc_map=preprocessing_map, emb=X_holdout)
@@ -107,7 +101,7 @@ if __name__ == "__main__":
     mse = mean_squared_error(y_true=embeddings_holdout, y_pred=embeddings_holdout_pred)
     # Generate null distribution of MSE
     mse_nulls = []
-    for _ in range(constants.N_ITER_REPROBUCIBILITY):
+    for _ in range(constants.N_ITER_REPRODUCIBILITY):
         # Shuffle training set
         outcomes_train_perm = np.random.permutation(outcomes_train)
         # Fit spline to shuffled data
@@ -137,5 +131,5 @@ if __name__ == "__main__":
     print(f"Base example satisfies proximity: {prox}")
     print(f"Base example satisfies monotonicity: {mono}")
     # Don't expect these to pass per use of synthetic data
-    print(f"Proximity and monotonicity both satisfy reproduciblity: {reproducible}")
+    print(f"Proximity and monotonicity both satisfy reproducibility: {reproducible}")
     print(f"Base example satisfies fit adequacy: {fit_adequacy} (p = {p:.4f})")
